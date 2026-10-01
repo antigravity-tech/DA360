@@ -109,6 +109,12 @@ class Saver(object):
             pred_depth = depth_preds[i][0]
             pred_depth[pred_depth<min_depth]=min_depth
 
+            # Save raw depth arrays as npy
+            path = os.path.join(self.save_dir, '%04d' % (self.idx) + '_depth_gt.npy')
+            np.save(path, gt_depth)
+            path = os.path.join(self.save_dir, '%04d' % (self.idx) + f'_depth_pred_{model_name}.npy')
+            np.save(path, pred_depth)
+
             depth = cv2.vconcat([gt_depth, pred_depth])
             depth = depth/depth[depth > 0].max()
             disp = depth
@@ -143,6 +149,10 @@ class Saver(object):
         rgb = rgb.cpu().numpy().transpose(0, 2, 3, 1)[0]
         pred_depth = pred_depth.cpu().numpy()[0, 0]
 
+        # Save raw depth array as npy
+        path = os.path.join(self.save_dir[:-7], name + f'_depth_pred_{model_name}.npy')
+        np.save(path, pred_depth)
+
         depth = pred_depth.copy()
         depth = depth/depth[depth > 0].max()
         disp = depth
@@ -161,4 +171,3 @@ class Saver(object):
         
         path = os.path.join(self.save_dir[:-7], name + f'_pc_pred_{model_name}.ply')
         self.save_as_point_cloud(pred_depth, rgb, path, pred_depth<200)
-    
