@@ -160,27 +160,7 @@ class Evaluator(object):
         self.metrics["acc/a3"].update(a3, N)
         return abs_rel, rms, a1
     
-    def compute_eval_metrics1(self, gt_depth, gt_disp, pred_disp, mask):
-        """
-        Computes metrics used to evaluate the model
-        """
-        N = gt_depth.shape[0]
-
-        abs_, abs_rel, sq_rel, rms, rms_log, log10, a1, a2, a3 = \
-            compute_depth_metrics1(gt_depth, gt_disp, pred_disp, mask, self.alignment, self.max_depth)
-
-        self.metrics["err/abs_err"].update(abs_, N)
-        self.metrics["err/abs_rel"].update(abs_rel, N)
-        self.metrics["err/sq_rel"].update(sq_rel, N)
-        self.metrics["err/rms"].update(rms, N)
-        self.metrics["err/log_rms"].update(rms_log, N)
-        self.metrics["err/log10"].update(log10, N)
-        self.metrics["acc/a1"].update(a1, N)
-        self.metrics["acc/a2"].update(a2, N)
-        self.metrics["acc/a3"].update(a3, N)
-        return abs_rel, rms, a1
-
-    def print(self, dir=None):
+    def print(self, dir=None, model_name=None):
         avg_metrics = []
         avg_metrics.append(self.metrics["err/abs_err"].avg)
         avg_metrics.append(self.metrics["err/abs_rel"].avg)
@@ -196,34 +176,11 @@ class Evaluator(object):
         print(("&  {: 8.5f} " * 9).format(*avg_metrics))
 
         if dir is not None:
-            file = os.path.join(dir, "result.txt")
+            fname = f"result_{model_name}.txt" if model_name else "result.txt"
+            file = os.path.join(dir, fname)
             with open(file, 'w') as f:
                 print("\n  " + ("{:>9} | " * 9).format("abs_err", "abs_rel", "sq_rel", "rms", "rms_log",
                                                       "log10", "a1", "a2", "a3"), file=f)
-                print(("&  {: 8.5f} " * 9).format(*avg_metrics), file=f)
-        
-        return ("&  {: 8.5f} " * 9).format(*avg_metrics)
-    
-    def print2(self, dir=None, idx=0):
-        avg_metrics = []
-        avg_metrics.append(self.metrics["err/abs_err"].avg)
-        avg_metrics.append(self.metrics["err/abs_rel"].avg)
-        avg_metrics.append(self.metrics["err/sq_rel"].avg)
-        avg_metrics.append(self.metrics["err/rms"].avg)
-        avg_metrics.append(self.metrics["err/log_rms"].avg)
-        avg_metrics.append(self.metrics["err/log10"].avg)
-        avg_metrics.append(self.metrics["acc/a1"].avg)
-        avg_metrics.append(self.metrics["acc/a2"].avg)
-        avg_metrics.append(self.metrics["acc/a3"].avg)
-
-        print("\n  "+ ("{:>9} | " * 9).format("abs_err", "abs_rel", "sq_rel", "rms", "rms_log", "log10", "a1", "a2", "a3") + " " + idx)
-        print(("&  {: 8.5f} " * 9).format(*avg_metrics))
-
-        if dir is not None:
-            file = os.path.join(dir, "result_detail.txt")
-            with open(file, 'a') as f:
-                print("\n  " + ("{:>9} | " * 9).format("abs_err", "abs_rel", "sq_rel", "rms", "rms_log",
-                                                      "log10", "a1", "a2", "a3") + " " + idx, file=f)
                 print(("&  {: 8.5f} " * 9).format(*avg_metrics), file=f)
         
         return ("&  {: 8.5f} " * 9).format(*avg_metrics)

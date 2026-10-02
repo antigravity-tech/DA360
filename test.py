@@ -22,6 +22,15 @@ parser.add_argument("--path", default="./data/images", type=str, help="path to t
 parser.add_argument("--model_path", type=str, help="path of model to load")
 parser.add_argument("--net", type=str, default=None, help="model to use")
 parser.add_argument('--model_name', type=str, default='DA360')
+parser.add_argument(
+    "--output_dir",
+    type=str,
+    default=None,
+    help="where to save predictions (default: ./results/images/)",
+)
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_RESULTS_IMAGES = os.path.join(ROOT_DIR, "results", "images")
 
 args = parser.parse_args()
 
@@ -68,7 +77,10 @@ def main():
     pbar = tqdm.tqdm(data_loader)
     pbar.set_description("Testing")
 
-    saver = Saver(os.path.join(args.model_path[:-4], "results"))
+    model_name = args.model_name or os.path.splitext(os.path.basename(args.model_path))[0]
+    output_dir = args.output_dir or DEFAULT_RESULTS_IMAGES
+    os.makedirs(output_dir, exist_ok=True)
+    saver = Saver(output_dir, sample_subdir=None)
 
     for idx, inputs in enumerate(pbar):
         equi_inputs = inputs["normalized_rgb"].to(device)
@@ -83,7 +95,7 @@ def main():
 
         name = os.path.basename(rgb_list[idx])[:-4]
 
-        saver.save_pred_samples(inputs["rgb"], pred_depth, name, args.model_name)
+        saver.save_pred_samples(inputs["rgb"], pred_depth, name, model_name)
 
 
 if __name__ == "__main__":

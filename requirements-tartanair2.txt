@@ -1,0 +1,35 @@
+# data/download_tartanair2.py + data/preprocess_tartanair2.py
+# Install: bash scripts/setup_tartanair2_env.sh
+#
+# Pin rationale (do not loosen without retesting preprocess):
+#   torch 2.1.1 + cu118  — matches cluster driver; unpinned torch pulls cu130 and fails CUDA init
+#   numpy 1.26.4         — torch 2.1.1 is built against NumPy 1.x; NumPy 2 breaks torch.from_numpy
+#   cupy-cuda12x 13.x     — CuPy 14.x pulls NumPy 2; 13.x works with NumPy 1.26 + conda NVRTC 12
+#   opencv-contrib 4.11   — tartanair --no-deps; avoids opencv 5 / headless breaking cv2.INTER_*
+#   tartanair (--no-deps in setup script) — avoids re-upgrading torch / numpy / opencv
+
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch==2.1.1
+torchvision==0.16.1
+
+opencv-contrib-python==4.11.0.86
+numpy==1.26.4
+scipy==1.15.2
+boto3
+colorama
+cupy-cuda12x>=13.6.0,<14
+einops
+huggingface-hub>=0.19.3,<1
+imageio
+kornia
+matplotlib>=3.1.2
+minio
+networkx>=2.4
+numba>=0.56
+pandas
+pillow
+plyfile
+pyquaternion
+pytransform3d
+pyyaml
+tqdm

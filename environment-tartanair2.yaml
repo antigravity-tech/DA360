@@ -1,0 +1,11 @@
+name: tartanair2
+channels:
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy=1.26.4
+  - cuda-nvrtc=12.6.85
+  - cuda-cudart=12.6.77

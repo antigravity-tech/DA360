@@ -25,11 +25,31 @@ parser.add_argument("--alignment", type=int, default=1, choices=[0, 1, 2],
 parser.add_argument("--save_samples", action="store_true", help="if set, save the depth maps and point clouds")
 
 parser.add_argument('--model_name', type=str, default='DA360')
+parser.add_argument(
+    "--results_dir",
+    type=str,
+    default=None,
+    help="root directory for metrics and optional visualizations (default: ./results/)",
+)
 
 args = parser.parse_args()
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_RESULTS_ROOT = os.path.join(ROOT_DIR, "results")
+
 
 max_depths = {"matterport3d": 10, "stanford2d3d": 10, "metropolis": 100}
+NUM_VIZ_SAMPLES = 10
+
+
+def viz_batch_indices(num_batches, n_viz=NUM_VIZ_SAMPLES):
+    """Evenly spaced batch indices; up to ``n_viz`` saves per dataset."""
+    if num_batches <= 0:
+        return set()
+    if num_batches <= n_viz:
+        return set(range(num_batches))
+    return {i * num_batches // n_viz for i in range(n_viz)}
+
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -51,12 +71,19 @@ def main():
     model.load_state_dict({k: v for k, v in model_dict.items() if k in model_state_dict}, strict=False)
     model.eval()
     
+    results_root = args.results_dir or DEFAULT_RESULTS_ROOT
+
     for data_name, val_loader in zip(args.val_datasets, val_loaders):
         max_depth = max_depths[data_name]
         evaluator = Evaluator(0, max_depth)
         
         evaluator.reset_eval_metrics()
-        saver = Saver(os.path.join(args.model_path[:-4], data_name))
+        dataset_results_dir = os.path.join(results_root, data_name)
+        os.makedirs(dataset_results_dir, exist_ok=True)
+        saver = Saver(dataset_results_dir, sample_subdir=None)
+        save_batch_indices = (
+            viz_batch_indices(len(val_loader)) if args.save_samples else set()
+        )
         
         pbar = tqdm.tqdm(val_loader)
         pbar.set_description("Evaluating "+data_name)
@@ -93,10 +120,10 @@ def main():
                 for i in range(gt_depth.shape[0]):
                     evaluator.compute_eval_metrics(gt_depth[i:i + 1], pred_depth[i:i + 1], mask[i:i + 1])
 
-                if args.save_samples and batch_idx%100==0:
-                    saver.save_samples(inputs["rgb"], gt_depth, pred_depth*3, mask, args.model_name)
+                if batch_idx in save_batch_indices:
+                    saver.save_samples(inputs["rgb"], gt_depth, pred_depth, mask, args.model_name)
 
-        evaluator.print(os.path.join(args.model_path[:-4], data_name))
+        evaluator.print(dataset_results_dir, model_name=args.model_name)
 
 
 if __name__ == "__main__":
